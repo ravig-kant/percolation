@@ -19,8 +19,8 @@ public class PercolationTest {
     @Test
     public void testTwentyMetric()
     {
-        int size = 10;
-        //System.setProperty("useQF", "true");
+        int size = 10000;
+        
         long starttm, endtm;
         starttm = System.currentTimeMillis();
         Percolation percolation = new Percolation(size);
@@ -31,16 +31,17 @@ public class PercolationTest {
             int j = randomizedCols.nextInt(size+1);
             if(i==0 || j==0)
                 continue;
-            System.out.println("Punching ("+i+","+j+")");
+            //System.out.println("Punching ("+i+","+j+")");
             try {
                 percolation.open(i, j);
-            } catch (IllegalAccessException ex) {
+            } catch (IllegalArgumentException ex) {
                 Logger.getLogger(PercolationTest.class.getName()).log(Level.SEVERE, null, ex);
             }
-            percolation.printConnectedComponents();
+            
         }
         endtm = System.currentTimeMillis();
         System.out.println("total time in miliseconds " + (endtm-starttm));
+        //percolation.printConnectedComponents();
     }
     
 }

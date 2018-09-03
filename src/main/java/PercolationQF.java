@@ -8,15 +8,16 @@
  *
  * @author ravigu
  */
-public class Percolation {
+public class PercolationQF {
 
     private final int[] openSites;
     private final int[] sz;
     private int numOfOpenSites = 0;
     private final int[] connectedComponent;
     private final int gridSize;
+    private static final boolean USE_QUICK_FIND = Boolean.valueOf(System.getProperty("useQF"));
 
-    public Percolation(int n) {
+    public PercolationQF(int n) {
         openSites = new int[n * n + 2];
         sz = new int[n * n + 2];
         gridSize = n;
@@ -31,9 +32,11 @@ public class Percolation {
 
     private int dimensionsToIndices(int row, int col) {
         return (row - 1) * gridSize + col;
+        // Column is subtrated by two. 
+        //One for starting indices of array in java. Two the count begins from zero
     }
     
-    public void open(int row, int col){
+    public void open(int row, int col) throws IllegalArgumentException {
         if (row > gridSize || col > gridSize || row < 1 || col < 1) {
             throw new IllegalArgumentException("Invalid inputs");
         }
@@ -49,6 +52,9 @@ public class Percolation {
         int right = (col < gridSize) ? dimensionsToIndices(row, col + 1) : -1;
 
         openSites[index] = 0;
+        //Always copy the top value to the bottom
+        //This will ensure that first index i.e. 0 will be marked for all the
+        //full sites. That makes checking wether a site is full or not a constant time operation
 
         if (left != -1 && isOpen(left)) {
             union(left, index);
@@ -65,7 +71,7 @@ public class Percolation {
         numOfOpenSites++;
     }
 
-    public boolean isOpen(int row, int col) {
+    public boolean isOpen(int row, int col) throws IllegalArgumentException {
         if (row > gridSize || col > gridSize || row < 1 || col < 1) {
             throw new IllegalArgumentException("Invalid inputs");
         }
@@ -77,17 +83,32 @@ public class Percolation {
         return openSites[index] == 0;
     }
 
+    private void union(int first, int second) {
+        if (USE_QUICK_FIND) {
+            qfUnion(first, second);
+        } else {
+            qUnion(first, second);
+        }
+    }
+
+    private void qfUnion(int first, int second) {
+        int tmp = connectedComponent[second];
+        for (int i = 1; i < gridSize * gridSize + 2; i++) {
+            if (connectedComponent[i] == tmp) {
+                connectedComponent[i] = connectedComponent[first];
+            }
+        }
+    }
+
     private int root(int index) {
         if (connectedComponent[index] == index) {
             return index;
         } else {
-            int l_root = root(connectedComponent[index]);
-            connectedComponent[index] = l_root;
-            return l_root;
+            return root(connectedComponent[index]);
         }
     }
 
-    private void union(int first, int second) {
+    private void qUnion(int first, int second) {
         int rootOfSecond = root(second);
         int rootOfFirst = root(first);
 
@@ -113,6 +134,18 @@ public class Percolation {
     }
 
     private boolean isFull(int index) {
+        if (USE_QUICK_FIND) {
+            return isFullQF(index);
+        } else {
+            return isFullQU(index);
+        }
+    }
+
+    private boolean isFullQF(int index) {
+        return connectedComponent[index] == 0;
+    }
+
+    private boolean isFullQU(int index) {
         return root(0) == root(index);
     }
 
@@ -120,8 +153,29 @@ public class Percolation {
         return isFull(gridSize * gridSize + 1);
     }
 
-    public int numberOfOpenSites() {
+    public int numOfOpenSites() {
         return numOfOpenSites;
     }
+
+//    private void printConnectedComponents() {
+//        System.out.println("Connected components is");
+//
+//        for (int j = 1; j <= gridSize; j++) {
+//            StringBuffer sb = new StringBuffer();
+//            sb.append("[");
+//            for (int i = ((j - 1) * gridSize) + 1; i <= j * gridSize; i++) {
+//                sb.append(openSites[i] + ",");
+//            }
+//            sb.deleteCharAt(sb.length() - 1);
+//            sb.append("]");
+//            sb.append("[");
+//            for (int i = ((j - 1) * gridSize) + 1; i <= j * gridSize; i++) {
+//                sb.append(connectedComponent[i] + ",");
+//            }
+//            sb.deleteCharAt(sb.length() - 1);
+//            sb.append("]");
+//            System.out.println(sb.toString());
+//        }
+//    }
 
 }
